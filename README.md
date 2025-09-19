@@ -1,5 +1,6 @@
-ESPHome configuration for enabeling WAVESHARE-S3-AUDIO-BOARD to be used as a HomeAssistant Voice Satellite.
-Features such as simultanious music/and announcements and continious on-board wake-word detection.
+ESPHome configuration for enabeling WAVESHARE-S3-AUDIO-BOARD (https://www.waveshare.com/esp32-s3-audio-board.htm)
+to be used as a HomeAssistant Voice Satellite. Features such as simultanious music/and announcements and
+continious on-board wake-word detection.
 
 The device's DAC and ADC share pins for the i2s bus so to be able to configure two i2s_audio points for 
 simultanious audio in/out I had to path the DAC (es8311) component, adding a setting to force it to become 

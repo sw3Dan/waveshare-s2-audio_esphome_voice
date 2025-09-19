@@ -6,8 +6,16 @@ The device's DAC and ADC share pins for the i2s bus so to be able to configure t
 simultanious audio in/out I had to path the DAC (es8311) component, adding a setting to force it to become 
 i2s master while still configuring the ESP and ADC to act as i2s slaves. I also had to fix MCLK/BLCK calculations.
 
-Steps to use the custom ES8311 component:
+example code features:
+* complete Voice Assistant setup
+* Onboard Wake-Word detection
+* Led animations and event sounds
+* working control buttons
+* exposed announcement and music media_players
+* built in alarm and timer
 
+Steps to use the custom ES8311 component:
+<code>
 substitutions:
   i2c_id: internal_i2c
   i2s_mclk_multiple: 256
@@ -102,6 +110,7 @@ speaker:
     source_speakers:
 
 ** Then create speaker: speaker/resamplers as needed ** 
+</code>
 
 General TODO/wishlist for the device.
 * UI: disable LEDS

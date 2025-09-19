@@ -42,7 +42,9 @@ substitutions:
 # Pre-configured camera code
 # exposes UI controls to Homeassistant
 # ====================================
-#packages:
+#packages: # REMOTE (GIT)
+#  remote_package_shorthand: github://esphome/sw3Dan/waveshare-s2-audio_esphome_voice/waveshare_camera_pkg.yaml@main
+#packages: # LOCAL FILE
 #  dynamic-cam: !include
 #    file: waveshare_camera_pkg.yaml
 

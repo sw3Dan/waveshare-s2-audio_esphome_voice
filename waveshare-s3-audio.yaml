@@ -39,6 +39,13 @@ substitutions:
   hidden_ssid: "false"
   led_num: '7' # WS2812 ring leds
 
+# Pre-configured camera code
+# exposes UI controls to Homeassistant
+# ====================================
+#packages:
+#  dynamic-cam: !include
+#    file: waveshare_camera_pkg.yaml
+
 esphome:
   name: $device_name
   friendly_name: Waveshare-Audio-3
@@ -178,10 +185,6 @@ ota:
     id: ota_esphome
     password: !secret ota_password
 
-#packages:
-#  dynamic-cam: !include
-#    file: dan-packages/waveshare_audio_cam.yaml
-
 i2c:
   - id: internal_i2c
     sda: GPIO11
@@ -271,11 +274,18 @@ audio_adc:
     bits_per_sample: $i2s_bps_mic
     #bits_per_sample: "${i2s_bits_per_sample}bit"
 
+#external_components:
+#  - source:
+#    type: local
+#    path: components
+#    components: [ es8311 ]
 external_components:
   - source:
-    type: local
-    path: components
+      type: git
+      url: "https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice"
+      ref: main
     components: [ es8311 ]
+    refresh: 0s
 
 audio_dac:
   - platform: es8311

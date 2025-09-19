@@ -1,0 +1,335 @@
+
+substitutions:
+  # Pin definitions
+  i2c_id: internal_i2c
+  reset_pin:     
+    tca9555: ioexp
+    number: 7 # EXIO7 
+    inverted: true
+  camera_data_pins: [GPIO2, GPIO17, GPIO18, GPIO39, GPIO45, GPIO46, GPIO47, GPIO48]
+  camera_vsync_pin: GPIO21
+  camera_href_pin: GPIO1
+  camera_pclk_pin: GPIO44
+  camera_xclk_pin: GPIO43  #External clock
+  camera_power_pin: 
+      tca9555: ioexp
+      number: 6 #EXIO6 
+      inverted: true
+  camera_max_framerate: '15fps'
+  camera_jpeg_quality: '10'
+  camera_vertical_flip: 'true'
+  camera_horizontal_mirror: 'true'
+  camera_contrast: '0'
+  camera_brightness: '0'
+  camera_saturation: '0'
+  camera_special_effect: 'none'
+  camera_aec_mode: 'auto'
+  camera_aec2: 'false'
+  camera_ae_level: '0'
+  camera_aec_value: '300'
+  camera_agc_mode: 'auto'
+  camera_agc_value: '0'
+  camera_agc_ceiling: '2x'
+  camera_white_balance: 'auto'
+
+  #TODO: make HA switches
+  camera_xclk_frequency: 12MHz
+  camera_idle_framerate: 0fps
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - if:
+            condition:
+              lambda: 'return id(image_rotated);'
+            then:
+              - lambda: |-
+                  sensor_t *s = esp_camera_sensor_get();
+                  if (s != nullptr) {
+                    s->set_vflip(s, 1);
+                    s->set_hmirror(s, 1);
+                  }
+              - switch.turn_on: camera_rotation_switch
+        - if:
+            condition:
+              lambda: 'return id(auto_exposure_enabled);'
+            then:
+              - lambda: |-
+                  sensor_t *s = esp_camera_sensor_get();
+                  if (s != nullptr) { s->set_exposure_ctrl(s, 1); }
+              - switch.turn_on: camera_aec_switch
+            else:
+              - lambda: |-
+                  sensor_t *s = esp_camera_sensor_get();
+                  if (s != nullptr) { s->set_exposure_ctrl(s, 0); }
+              - switch.turn_off: camera_aec_switch
+
+globals:
+  # TODO: fuse substitution set settings to boot settings
+  - id: image_rotated
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: auto_exposure_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true' # Default to ON
+
+# Camera configuration
+esp32_camera:
+  name: "ESP32 Camera"
+  id: seeed_camera
+  data_pins: $data_pins
+  vsync_pin: $camera_vsync_pin
+  href_pin: $camera_href_pin
+  pixel_clock_pin: $camera_pclk_pin
+  external_clock: 
+    pin: $camera_xclk_pin
+    frequency: $camera_xclk_frequency #12MHz
+  i2c_id: $i2c_id
+  #power_down_pin: ${camera_power_pin}
+
+  #frame settings  
+  max_framerate: ${camera_max_framerate}
+  idle_framerate: ${camera_idle_framerate} #0.1fps #default
+  
+  #Image Settings
+  resolution: 1280X1024
+  jpeg_quality: ${camera_jpeg_quality}
+  vertical_flip: ${camera_vertical_flip}
+  horizontal_mirror: ${camera_horizontal_mirror}
+  brightness: ${camera_brightness}
+  contrast: ${camera_contrast}
+  saturation: ${camera_saturation}
+  special_effect: ${camera_special_effect}
+
+  #Exposure settings
+  aec_mode: ${camera_aec_mode}
+  aec2: ${camera_aec2}
+  ae_level: ${camera_ae_level}
+  aec_value: ${camera_ae_level}
+  
+  #Sensor gain settings
+  agc_mode: ${camera_aec_mode}
+  agc_gain_ceiling: ${camera_agc_ceiling}
+  agc_value: ${camera_agc_value}  
+  
+  #White balance settings
+  wb_mode: ${camera_white_balance}
+
+sensor: 
+  - platform: homeassistant
+    id: camera_jpeg_quality
+    entity_id: input_number.camera_jpeg_quality
+
+  - platform: homeassistant
+    id: camera_vertical_flip
+    entity_id: input_boolean.camera_vertical_flip
+
+  - platform: homeassistant
+    id: camera_horizontal_mirror
+    entity_id: input_boolean.camera_horizontal_mirror
+
+  - platform: homeassistant
+    id: camera_brightness
+    entity_id: input_number.camera_brightness
+
+  - platform: homeassistant
+    id: camera_contrast
+    entity_id: input_number.camera_contrast
+
+  - platform: homeassistant
+    id: camera_saturation
+    entity_id: input_number.camera_saturation
+
+  - platform: homeassistant
+    id: camera_special_effect
+    entity_id: input_select.camera_special_effect
+
+  - platform: homeassistant
+    id: camera_aec_mode
+    entity_id: input_select.camera_aec_mode
+
+  - platform: homeassistant
+    id: camera_aec2
+    entity_id: input_boolean.camera_aec2
+
+  - platform: homeassistant
+    id: camera_ae_level
+    entity_id: input_number.camera_ae_level
+
+  - platform: homeassistant
+    id: camera_ae_value
+    entity_id: input_number.camera_ae_value 
+   
+  - platform: homeassistant
+    id: camera_agc_mode
+    entity_id: input_select.camera_agc_mode
+
+  - platform: homeassistant
+    id: camera_agc_ceiling
+    entity_id: input_number.camera_agc_ceiling
+
+  - platform: homeassistant
+    id: camera_agc_value
+    entity_id: input_number.camera_agc_value
+
+  - platform: homeassistant
+    id: camera_white_balance
+    entity_id: input_select.camera_white_balance
+
+select:
+  - platform: template
+    name: "Camera Resolution"
+    id: camera_resolution_select
+    icon: "mdi:aspect-ratio"
+    options: ["QVGA (320x240)", "VGA (640x480)", "SVGA (800x600)", "XGA (1024x768)", "UXGA (1600x1200)"]
+    set_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s == nullptr) { return; }
+          framesize_t new_framesize = FRAMESIZE_INVALID;
+          if (x == "QVGA (320x240)") new_framesize = FRAMESIZE_QVGA;
+          else if (x == "VGA (640x480)") new_framesize = FRAMESIZE_VGA;
+          else if (x == "SVGA (800x600)") new_framesize = FRAMESIZE_SVGA;
+          else if (x == "XGA (1024x768)") new_framesize = FRAMESIZE_XGA;
+          else if (x == "UXGA (1600x1200)") new_framesize = FRAMESIZE_UXGA;
+          if (new_framesize != FRAMESIZE_INVALID && s->set_framesize(s, new_framesize) == 0) {
+            id(camera_resolution_select).publish_state(x);
+            id(current_resolution).publish_state(x);
+          }
+
+  - platform: template
+    name: "JPEG Quality"
+    id: camera_jpeg_quality_select
+    icon: "mdi:image-size-select-large"
+    options: ["Best (10)", "Good (15)", "Medium (25)", "Low (40)", "Fastest (63)"]
+    set_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s == nullptr) { return; }
+          size_t first = x.find("(");
+          size_t last = x.find(")");
+          int quality = std::stoi(x.substr(first + 1, last - first - 1));
+          if (s->set_quality(s, quality) == 0) {
+            id(camera_jpeg_quality_select).publish_state(x);
+            id(current_jpeg_quality).publish_state(x);
+          }
+
+text_sensor:
+  - platform: template
+    name: "Current Camera Resolution"
+    id: current_resolution
+    icon: "mdi:camera-control"
+  - platform: template
+    name: "Current JPEG Quality"
+    id: current_jpeg_quality
+    icon: "mdi:quality-high"
+
+switch:
+  - platform: template
+    name: "Camera Control"
+    id: camera_control_template
+    optimistic: True
+    turn_on_action: 
+      then:
+        - switch.turn_on: camera_power_output
+    turn_off_action: 
+      then:
+        - switch.turn_off: camera_power_output    
+  
+  - platform: restart
+    id: seecd_restart
+    name: "Camera Restart" 
+  
+  - platform: gpio
+    pin: ${camera_power_pin}
+    id: camera_power_output
+    name: "camera output"
+
+  - platform: template
+    name: "Reset Camera"
+    id: reset_camera_settings
+    turn_on_action: # Reset values to default
+      - lambda: |-
+          // Set camera to default values using substitutions and proper conversions
+          id(seeed_camera).set_contrast(0);
+          id(seeed_camera).set_brightness(0);     
+      - switch.turn_off: reset_camera_settings  # Ensure the switch is momentary
+      
+  - platform: template
+    name: "Rotate Image 180°"
+    id: camera_rotation_switch
+    icon: "mdi:rotate-3d-variant"
+    lambda: 'return id(image_rotated);'
+    turn_on_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_vflip(s, 1);
+            s->set_hmirror(s, 1);
+            id(image_rotated) = true;
+          }
+    turn_off_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_vflip(s, 0);
+            s->set_hmirror(s, 0);
+            id(image_rotated) = false;
+          }
+
+  - platform: template
+    name: "Auto Exposure Control"
+    id: camera_aec_switch
+    icon: "mdi:auto-fix-high"
+    lambda: 'return id(auto_exposure_enabled);'
+    turn_on_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_exposure_ctrl(s, 1);
+            id(auto_exposure_enabled) = true;
+          }
+    turn_off_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_exposure_ctrl(s, 0);
+            id(auto_exposure_enabled) = false;
+          }
+
+number:
+  - platform: template
+    name: "AE Level"
+    id: camera_ae_level_number
+    icon: "mdi:exposure"
+    optimistic: true
+    min_value: -2
+    max_value: 2
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_ae_level(s, (int)x);
+          }
+
+  - platform: template
+    name: "Manual Exposure Time"
+    id: camera_aec_value_number
+    icon: "mdi:camera-timer"
+    optimistic: true
+    min_value: 0
+    max_value: 1200
+    step: 1
+    mode: slider
+    set_action:
+      - lambda: |-
+          sensor_t *s = esp_camera_sensor_get();
+          if (s != nullptr) {
+            s->set_aec_value(s, (int)x);
+          }

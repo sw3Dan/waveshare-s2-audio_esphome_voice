@@ -15,7 +15,7 @@ example code features:
 * built in alarm and timer
 
 Steps to use the custom ES8311 component:
-<code>
+``` yaml
 substitutions:
   i2c_id: internal_i2c
   i2s_mclk_multiple: 256
@@ -110,7 +110,7 @@ speaker:
     source_speakers:
 
 ** Then create speaker: speaker/resamplers as needed ** 
-</code>
+```
 
 General TODO/wishlist for the device.
 * UI: disable LEDS

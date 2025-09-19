@@ -273,8 +273,8 @@ audio_adc:
 
 external_components:
   - source:
-      type: local
-      path: components
+    type: local
+    path: components
     components: [ es8311 ]
 
 audio_dac:

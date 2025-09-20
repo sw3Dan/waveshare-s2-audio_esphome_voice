@@ -132,6 +132,9 @@ wifi:
 debug:
   update_interval: 5s
 
+logger:
+  level: DEBUG
+
 api:
   id: api_id
   actions:
@@ -177,7 +180,7 @@ api:
     - script.execute: control_leds
 
   encryption:
-    key: !secret "api_${esp32-audio-3}"
+    key: !secret api_esp32-audio-s3
 
 # http_request: 
 #   verify_ssl: false
@@ -276,11 +279,11 @@ audio_adc:
     bits_per_sample: $i2s_bps_mic
     #bits_per_sample: "${i2s_bits_per_sample}bit"
 
-#external_components:
-#  - source:
-#    type: local
-#    path: components
-#    components: [ es8311 ]
+# external_components:
+#   - source:
+#       type: local
+#       path: components
+#     components: [ es8311 ]
 external_components:
   - source:
       type: git

@@ -553,6 +553,11 @@ voice_assistant:
     # Reset the voice assistant phase id and reset the LED animations.
     - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
     - script.execute: control_leds
+    - if:
+        condition:
+          switch.is_off: mic_mute_switch
+        then:
+          - micro_wake_word.start:
   on_timer_finished:
     - switch.turn_on: timer_ringing
     - lambda: |
@@ -657,6 +662,7 @@ micro_wake_word:
                                       priority: true
                                       sound_file: !lambda return id(wake_word_triggered_sound);
                                   - delay: 300ms
+                            - micro_wake_word.stop:
                             - voice_assistant.start:
                                 wake_word: !lambda return wake_word;
 
